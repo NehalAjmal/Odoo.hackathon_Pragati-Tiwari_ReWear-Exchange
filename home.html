@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReWear - Sustainable Clothing Exchange</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF1F35',
+                        brand: {
+                            dark: '#438973',
+                            accent: '#2DC8BB',
+                        },
+                        background: '#F0FFF0',
+                        'text-dark': '#0B090B',
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #438973 0%, #2DC8BB 100%);
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .nav-link:hover {
+            color: #FF1F35;
+        }
+        .swap-status {
+            position: relative;
+        }
+        .swap-status::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .swap-status.requested::after {
+            background-color: #FFA500;
+        }
+        .swap-status.accepted::after {
+            background-color: #2DC8BB;
+        }
+        .swap-status.completed::after {
+            background-color: #438973;
+        }
+        .swap-status.rejected::after {
+            background-color: #FF1F35;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-text-dark min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-brand-dark text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-recycle text-2xl text-primary mr-2"></i>
+                        <span class="text-xl font-bold">ReWear</span>
+                    </div>
+                    <div class="hidden md:block ml-10">
+                        <div class="flex space-x-4">
+                            <a href="#" class="nav-link text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white hover:bg-opacity-10 transition">Browse</a>
+                            <a href="#" class="nav-link text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white hover:bg-opacity-10 transition">My Closet</a>
+                            <a href="#" class="nav-link text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white hover:bg-opacity-10 transition">Swaps</a>
+                            <a href="#" class="nav-link text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-white hover:bg-opacity-10 transition">Points</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <button class="p-1 rounded-full text-white hover:text-primary focus:outline-none">
+                            <i class="fas fa-bell"></i>
+                            <span class="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
+                        </button>
+                        <div class="ml-3 relative">
+                            <div>
+                                <button id="user-menu" class="max-w-xs flex items-center text-sm rounded-full focus:outline-none">
+                                    <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button class="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-primary focus:outline-none">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-brand-dark">
+            <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-white">Browse</a>
+            <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-white">My Closet</a>
+            <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-white">Swaps</a>
+            <a href="#" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-white">Points</a>
+        </div>
+        <div class="pt-4 pb-3 border-t border-gray-700 bg-brand-dark">
+            <div class="flex items-center px-5">
+                <div class="flex-shrink-0">
+                    <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="">
+                </div>
+                <div class="ml-3">
+                    <div class="text-base font-medium text-white">Jane Cooper</div>
+                    <div class="text-sm font-medium text-brand-accent">150 Points</div>
+                </div>
+                <button class="ml-auto flex-shrink-0 p-1 rounded-full text-white hover:text-primary focus:outline-none">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </div>
+            <div class="mt-3 px-2 space-y-1">
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white hover:bg-opacity-10">Your Profile</a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white hover:bg-opacity-10">Settings</a>
+                <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-white hover:bg-opacity-10">Sign out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="gradient-bg text-white py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:flex lg:items-center lg:justify-between">
+                    <div class="lg:w-1/2">
+                        <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+                            Swap clothes. Save the planet.
+                        </h1>
+                        <p class="mt-5 text-xl text-white">
+                            Join our community of eco-conscious fashion lovers. Give your clothes a second life and earn points for new-to-you items.
+                        </p>
+                        <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                            <button class="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-lg transition">
+                                Start Swapping
+                            </button>
+                            <button class="bg-white hover:bg-opacity-90 text-brand-dark font-bold py-3 px-6 rounded-lg transition">
+                                How It Works
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-10 lg:mt-0 lg:w-1/2 flex justify-center">
+                        <div class="relative w-full max-w-md">
+                            <div class="absolute -top-6 -left-6 w-64 h-64 bg-white bg-opacity-10 rounded-full"></div>
+                            <div class="absolute -bottom-6 -right-6 w-64 h-64 bg-white bg-opacity-10 rounded-full"></div>
+                            <img class="relative rounded-lg shadow-2xl" src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Clothing swap">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl font-bold text-brand-dark">1,250+</div>
+                        <div class="text-gray-600 mt-2">Items Swapped</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-brand-dark">850+</div>
+                        <div class="text-gray-600 mt-2">Community Members</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-brand-dark">2.5K+</div>
+                        <div class="text-gray-600 mt-2">Pounds Saved</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-brand-dark">4.8★</div>
+                        <div class="text-gray-600 mt-2">Average Rating</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Browse Items Section -->
+        <section class="py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-bold">Browse Available Items</h2>
+                    <div class="flex space-x-4">
+                        <div class="relative">
+                            <select class="appearance-none bg-white border border-gray-300 rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent">
+                                <option>All Categories</option>
+                                <option>Tops</option>
+                                <option>Bottoms</option>
+                                <option>Dresses</option>
+                                <option>Outerwear</option>
+                                <option>Accessories</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                        <button class="bg-brand-accent hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-lg transition flex items-center">
+                            <i class="fas fa-sliders-h mr-2"></i>
+                            Filters
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Item Card 1 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden item-card transition duration-300">
+                        <div class="relative pb-3/4 h-64">
+                            <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Denim jacket">
+                            <div class="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                                75 pts
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">Vintage Denim Jacket</h3>
+                                    <p class="text-gray-600 text-sm">Size: M • Condition: Gently Used</p>
+                                </div>
+                                <button class="text-primary hover:text-brand-dark">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Denim</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Vintage</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Jacket</span>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <img class="w-6 h-6 rounded-full mr-2" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="User">
+                                    <span class="text-sm">Sarah_J</span>
+                                </div>
+                                <button class="bg-primary hover:bg-opacity-90 text-white text-sm font-medium py-1 px-3 rounded transition">
+                                    Swap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item Card 2 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden item-card transition duration-300">
+                        <div class="relative pb-3/4 h-64">
+                            <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1551232864-3f0890e580d9?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Summer dress">
+                            <div class="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                                120 pts
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">Floral Summer Dress</h3>
+                                    <p class="text-gray-600 text-sm">Size: S • Condition: Like New</p>
+                                </div>
+                                <button class="text-primary hover:text-brand-dark">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Dress</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Summer</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Floral</span>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <img class="w-6 h-6 rounded-full mr-2" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="User">
+                                    <span class="text-sm">Mia_T</span>
+                                </div>
+                                <button class="bg-primary hover:bg-opacity-90 text-white text-sm font-medium py-1 px-3 rounded transition">
+                                    Swap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item Card 3 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden item-card transition duration-300">
+                        <div class="relative pb-3/4 h-64">
+                            <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1520367445093-50dc08a59d9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Leather boots">
+                            <div class="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                                150 pts
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">Ankle Leather Boots</h3>
+                                    <p class="text-gray-600 text-sm">Size: 8 • Condition: New</p>
+                                </div>
+                                <button class="text-primary hover:text-brand-dark">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Shoes</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Leather</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Boots</span>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <img class="w-6 h-6 rounded-full mr-2" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="User">
+                                    <span class="text-sm">Alex_R</span>
+                                </div>
+                                <button class="bg-primary hover:bg-opacity-90 text-white text-sm font-medium py-1 px-3 rounded transition">
+                                    Swap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item Card 4 -->
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden item-card transition duration-300">
+                        <div class="relative pb-3/4 h-64">
+                            <img class="absolute h-full w-full object-cover" src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Silk scarf">
+                            <div class="absolute top-2 right-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-full">
+                                50 pts
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-bold text-lg">Vintage Silk Scarf</h3>
+                                    <p class="text-gray-600 text-sm">One Size • Condition: Worn</p>
+                                </div>
+                                <button class="text-primary hover:text-brand-dark">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Accessory</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Silk</span>
+                                <span class="bg-brand-accent bg-opacity-20 text-brand-dark text-xs px-2 py-1 rounded">Vintage</span>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <img class="w-6 h-6 rounded-full mr-2" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="User">
+                                    <span class="text-sm">Emma_L</span>
+                                </div>
+                                <button class="bg-primary hover:bg-opacity-90 text-white text-sm font-medium py-1 px-3 rounded transition">
+                                    Swap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-10 text-center">
+                    <button class="border-2 border-brand-dark hover:bg-brand-dark hover:text-white text-brand-dark font-bold py-2 px-6 rounded-lg transition">
+                        Load More Items
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-bold text-center mb-12">How ReWear Works</h2>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <div class="bg-brand-accent bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-tshirt text-brand-dark text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">1. List Your Items</h3>
+                        <p class="text-gray-600">Upload photos and details of clothes you're ready to part with. We'll help you determine their point value.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-brand-accent bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exchange-alt text-brand-dark text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">2. Request Swaps</h3>
+                        <p class="text-gray-600">Browse our community's listings and request items you love. Or let us match you with a Mystery Swap Box!</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-brand-accent bg-opacity-20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-leaf text-brand-dark text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">3. Earn & Redeem</h3>
+                        <p class="text-gray-600">Earn points when your items are swapped. Redeem points for new-to-you clothes and eco-friendly rewards.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section class="py-12 gradient-bg text-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-bold text-center mb-12">What Our Community Says</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <img class="w-10 h-10 rounded-full mr-4" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="User">
+                            <div>
+                                <h4 class="font-bold">Sophia K.</h4>
+                                <div class="flex text-yellow-300">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p>"I've refreshed my entire wardrobe without spending a dime! The quality of items I've received has been amazing."</p>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <img class="w-10 h-10 rounded-full mr-4" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="User">
+                            <div>
+                                <h4 class="font-bold">James L.</h4>
+                                <div class="flex text-yellow-300">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p>"As a guy, I was skeptical about clothing swaps, but ReWear has some great menswear options. Found a perfect leather jacket!"</p>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <img class="w-10 h-10 rounded-full mr-4" src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="User">
+                            <div>
+                                <h4 class="font-bold">Priya M.</h4>
+                                <div class="flex text-yellow-300">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <p>"Love seeing the environmental impact of each swap. It's motivating to know I'm helping reduce textile waste."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold mb-6">Ready to Join the Fashion Revolution?</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+                    Sign up today and get <span class="font-bold text-primary">50 bonus points</span> to start your sustainable fashion journey.
+                </p>
+                <button class="bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-8 rounded-lg text-lg transition">
+                    Create Free Account
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">ReWear</h3>
+                    <p class="text-sm text-gray-300">
+                        Sustainable fashion through community sharing. Join us in reducing textile waste one swap at a time.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Browse Items</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">How It Works</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Pricing</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Community</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Success Stories</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Blog</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Events</a></li>
+                        <li><a href="#" class="text-sm text-gray-300 hover:text-white">Refer a Friend</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Connect</h3>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white"><i class="fab fa-pinterest-p"></i></a>
+                    </div>
+                    <p class="text-sm text-gray-300">
+                        Subscribe to our newsletter for tips and exclusive offers.
+                    </p>
+                    <div class="mt-3 flex">
+                        <input type="email" placeholder="Your email" class="bg-white bg-opacity-10 text-white text-sm px-3 py-2 rounded-l focus:outline-none w-full">
+                        <button class="bg-primary hover:bg-opacity-90 text-white px-3 py-2 rounded-r text-sm">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm text-gray-400">
+                    © 2023 ReWear. All rights reserved.
+                </p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">Privacy Policy</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">Terms of Service</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg flex justify-around items-center py-3 border-t border-gray-200">
+        <a href="#" class="flex flex-col items-center text-primary">
+            <i class="fas fa-home text-lg"></i>
+            <span class="text-xs mt-1">Home</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-500 hover:text-primary">
+            <i class="fas fa-search text-lg"></i>
+            <span class="text-xs mt-1">Browse</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-500 hover:text-primary">
+            <i class="fas fa-plus-circle text-lg"></i>
+            <span class="text-xs mt-1">Add</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-500 hover:text-primary">
+            <i class="fas fa-exchange-alt text-lg"></i>
+            <span class="text-xs mt-1">Swaps</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-500 hover:text-primary">
+            <i class="fas fa-user text-lg"></i>
+            <span class="text-xs mt-1">Profile</span>
+        </a>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.querySelector('button[aria-controls="mobile-menu"]');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // Simulate loading more items
+            const loadMoreButton = document.querySelector('footer + button');
+            if (loadMoreButton) {
+                loadMoreButton.addEventListener('click', function() {
+                    this.textContent = 'Loading...';
+                    this.classList.add('opacity-75');
+                    setTimeout(() => {
+                        this.textContent = 'Load More Items';
+                        this.classList.remove('opacity-75');
+                        // In a real app, you would fetch and append more items here
+                    }, 1500);
+                });
+            }
+            
+            // Swap button functionality
+            const swapButtons = document.querySelectorAll('.item-card button:last-child');
+            swapButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const itemTitle = this.closest('.item-card').querySelector('h3').textContent;
+                    alert(Swap request sent for: ${itemTitle});
+                });
+            });
+        });
+    </script>
+</body>
+</html>
